@@ -1,65 +1,44 @@
-# render.yaml — Blueprint de AutoMétrica para Render (plan gratuito)
-# Crea: PostgreSQL + Web Service (FastAPI) + Static Site (React).
-# Uso: Dashboard > New + > Blueprint > elige el repo. Render te pedirá
-# los valores marcados con "sync: false" (secretos / URLs).
-# Este archivo debe estar en la RAÍZ del repositorio (junto a autometrica-full/).
+# render.yaml – Blueprint de AutoMétrica para Render (Plan Gratuito)
+# Este archivo debe estar ubicado en la RAÍZ de tu repositorio de GitHub.
 
 databases:
   - name: autometrica-db
-    plan: free              # expira a los 30 días, sin backups (ver DEPLOY_README.txt)
-    region: ohio            # misma región para TODOS los recursos
+    plan: free
+    region: ohio
     databaseName: autometrica
     user: autometrica
 
 services:
-  # ───────────── Backend (FastAPI) ─────────────
+  # 1. Backend (Servicio Web)
   - type: web
-    name: autometrica-web
-    runtime: static
-    rootDir: autometrica-full/frontend
-    buildCommand: npm install && npm run build
-    staticPublishPath: dist
-  # (No incluyas la línea 'region: ohio' aquí)
-    autoDeploy: true
+    name: autometrica-api
+    env: node
+    region: ohio
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
     envVars:
-      - key: PYTHON_VERSION
-        value: 3.12.3
-      - key: ENVIRONMENT
-        value: production
-      - key: DEBUG
-        value: "false"
-      - key: DATABASE_URL            # Internal Database URL, automática
+      - key: NODE_VERSION
+        value: "22"
+      - key: DATABASE_URL
         fromDatabase:
           name: autometrica-db
           property: connectionString
-      - key: FRONTEND_URL            # URL del Static Site, sin "/" final
-        sync: false
-      - key: ADMIN_EMAIL             # superusuario creado por build.sh
-        sync: false
-      - key: ADMIN_PASSWORD          # 8+ caracteres, mayúscula, minúscula y especial
-        sync: false
-      - key: ADMIN_NAME
-        value: Administrador
-      - key: RESEND_API_KEY          # NUEVA clave (la anterior estaba expuesta)
-        sync: false
-      - key: RESEND_FROM
-        value: "AutoMétrica <onboarding@resend.dev>"
 
-  # ───────────── Frontend (React + Vite) ─────────────
+  # 2. Frontend (Sitio Estático - React / Vite)
   - type: web
     name: autometrica-web
     runtime: static
-    region: ohio    
+    # IMPORTANTE: Los sitios estáticos en Render NO llevan región (evita el error anterior)
     rootDir: autometrica-full/frontend
     buildCommand: npm install && npm run build
     staticPublishPath: dist
-    autoDeploy: true
     envVars:
-      - key: VITE_API_URL            # https://autometrica-api.onrender.com/api/v1
-        sync: false
+      - key: VITE_API_URL
+        value: https://autometrica-api.onrender.com/api/v1
       - key: NODE_VERSION
         value: "22"
     routes:
-      - type: rewrite                # necesario para React Router
+      - type: rewrite
         source: /*
         destination: /index.html
