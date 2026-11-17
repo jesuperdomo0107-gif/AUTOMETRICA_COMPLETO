@@ -14,14 +14,12 @@ databases:
 services:
   # ───────────── Backend (FastAPI) ─────────────
   - type: web
-    name: autometrica-api
-    runtime: python
-    plan: free
-    region: ohio
-    rootDir: autometrica-full/backend
-    buildCommand: bash build.sh
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
+    name: autometrica-web
+    runtime: static
+    rootDir: autometrica-full/frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+  # (No incluyas la línea 'region: ohio' aquí)
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION
